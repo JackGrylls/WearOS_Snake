@@ -49,6 +49,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.LinkedList
+import java.util.Queue
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -67,11 +69,13 @@ class GameViewModel : ViewModel()
         }
     }
 
-    var expiry = Array(numSquares) { Array<Int>(numSquares) { 0 } }
-
     var headX = numSquares / 2
     var headY = numSquares / 2
     var headAngle: Double = 0.0
+    var snakeLength = 15
+
+    var snakeX: Queue<Int> = LinkedList()
+    var snakeY: Queue<Int> = LinkedList()
 
     var inputLock = false
     fun setPixel(x: Int, y: Int, color: Color)
@@ -89,28 +93,11 @@ class GameViewModel : ViewModel()
             {
                 var xCor = x - centre
                 var yCor = y - centre
-                if ((xCor*xCor) + (yCor*yCor) > radius * radius) expiry[x][y] = -1
+                if ((xCor*xCor) + (yCor*yCor) > radius * radius) setPixel(x,y,filledCol)
             }
         }
     }
-    fun updateGrid()
-    {
-        for (x in 0..numSquares - 1)
-        {
-            for (y in 0..numSquares - 1)
-            {
-                if (expiry[x][y] > 0)
-                {
-                    expiry[x][y] -= 1
-                }
-                if (expiry[x][y] == 0) setPixel(x,y,backgroundCol)
-                else
-                {
-                    setPixel(x,y,filledCol)
-                }
-            }
-        }
-    }
+
     fun onRotate(amount: Float)
     {
         if (!inputLock) return;
@@ -133,11 +120,21 @@ class GameViewModel : ViewModel()
                 delay(100) // tick rate
                 var veloX = cos(headAngle / 180 * PI)
                 var veloY = sin(headAngle / 180 * PI)
+                snakeX.add(headX)
+                snakeY.add(headY)
                 setPixel(headX,headY,filledCol)
-                if (expiry[headX][headY] >= 0 ) expiry[headX][headY] = 10
-                headX = (headX + veloX.roundToInt()).mod(25)
-                headY = (headY + veloY.roundToInt()).mod(25)
-                updateGrid()
+                if (snakeX.size > snakeLength)
+                {
+                    var lastX = snakeX.first()
+                    var lastY = snakeY.first()
+                    setPixel(lastX,lastY,backgroundCol)
+                    snakeX.remove()
+                    snakeY.remove()
+                }
+
+                headX = (headX + veloX.roundToInt()).mod(numSquares)
+                headY = (headY + veloY.roundToInt()).mod(numSquares)
+//                updateGrid()
             }
         }
     }
