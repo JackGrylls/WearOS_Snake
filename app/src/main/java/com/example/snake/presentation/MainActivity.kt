@@ -29,6 +29,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.fromColorLong
 import androidx.compose.ui.input.rotary.RotaryScrollEvent
 import androidx.compose.ui.input.rotary.onPreRotaryScrollEvent
 import androidx.compose.ui.input.rotary.onRotaryScrollEvent
@@ -53,6 +54,8 @@ import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
+val backgroundCol = Color.hsv(72f,50f/100,0.5f)
+val filledCol = Color.hsv(72f,50f/100,0.1f)
 class GameViewModel : ViewModel()
 {
     val numSquares = 25
@@ -60,9 +63,11 @@ class GameViewModel : ViewModel()
     val pixels = mutableStateListOf<Color>().apply {
         repeat(numSquares*numSquares)
         {
-            add(Color.Blue)
+            add(backgroundCol)
         }
     }
+
+    var expiry = Array(numSquares) { Array<Int>(numSquares) { 0 } }
 
     var headX = numSquares / 2
     var headY = numSquares / 2
@@ -72,6 +77,38 @@ class GameViewModel : ViewModel()
         pixels[y * numSquares + x] = color
     }
 
+    fun initGrid()
+    {
+        var centre: Float = numSquares / 2f - 0.5f
+        var radius: Float = centre - 0.5f
+        for (x in 0..numSquares - 1)
+        {
+            for (y in 0..numSquares - 1)
+            {
+                var xCor = x - centre
+                var yCor = y - centre
+                if ((xCor*xCor) + (yCor*yCor) > radius * radius) expiry[x][y] = -1
+            }
+        }
+    }
+    fun updateGrid()
+    {
+        for (x in 0..numSquares - 1)
+        {
+            for (y in 0..numSquares - 1)
+            {
+                if (expiry[x][y] > 0)
+                {
+                    expiry[x][y] -= 1
+                }
+                if (expiry[x][y] == 0) setPixel(x,y,backgroundCol)
+                else
+                {
+                    setPixel(x,y,filledCol)
+                }
+            }
+        }
+    }
     fun onRotate(amount: Float)
     {
         // Rotate
@@ -92,10 +129,11 @@ class GameViewModel : ViewModel()
                 delay(100) // tick rate
                 var veloX = cos(headAngle / 180 * PI)
                 var veloY = sin(headAngle / 180 * PI)
-                print(veloX.roundToInt().toString()+" "+veloY.roundToInt().toString())
+                setPixel(headX,headY,filledCol)
+                if (expiry[headX][headY] >= 0 ) expiry[headX][headY] = 10
                 headX = (headX + veloX.roundToInt()).mod(25)
                 headY = (headY + veloY.roundToInt()).mod(25)
-                setPixel(headX,headY,Color.Red)
+                updateGrid()
             }
         }
     }
@@ -116,6 +154,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val viewModel: GameViewModel = viewModel()
+            viewModel.initGrid()
             WearApp (
                 viewModel = viewModel
             )
@@ -127,6 +166,7 @@ class MainActivity : ComponentActivity() {
 fun WearApp(viewModel: GameViewModel) {
     val focusRequester = remember { FocusRequester() }
     SnakeTheme {
+        Canvas(modifier = Modifier.fillMaxSize()) { drawRect(color = backgroundCol) }
         Canvas(
             modifier = Modifier.fillMaxSize()
         )
@@ -140,8 +180,8 @@ fun WearApp(viewModel: GameViewModel) {
             {
                 for (y in 0..numSquares - 1)
                 {
-                    val xCor : Float = size.width / (numSquares) * x
-                    val yCor : Float = size.height / (numSquares) * y
+                    val xCor : Float = size.width / (numSquares) * x + 1
+                    val yCor : Float = size.height / (numSquares) * y + 1
                     drawRect (
                         color = pixels[y * numSquares + x],
                         size = Size(squareSize,squareSize),
