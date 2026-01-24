@@ -6,21 +6,33 @@
 package com.example.snake.presentation
 
 import android.os.Bundle
+import android.os.Debug
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.rotary.RotaryScrollEvent
+import androidx.compose.ui.input.rotary.onPreRotaryScrollEvent
+import androidx.compose.ui.input.rotary.onRotaryScrollEvent
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,8 +45,13 @@ import androidx.wear.tooling.preview.devices.WearDevices
 import com.example.snake.R
 import com.example.snake.presentation.theme.SnakeTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 class GameViewModel : ViewModel()
 {
@@ -47,22 +64,46 @@ class GameViewModel : ViewModel()
         }
     }
 
+    var headX = numSquares / 2
+    var headY = numSquares / 2
+    var headAngle: Double = 0.0
     fun setPixel(x: Int, y: Int, color: Color)
     {
         pixels[y * numSquares + x] = color
     }
 
+    fun onRotate(amount: Float)
+    {
+        // Rotate
+        if (amount >= 0) headAngle += 90
+        else headAngle -= 90
+
+        // Bound correction
+        if (headAngle == -90.0) headAngle = 270.0
+        if (headAngle == 360.0) headAngle = 0.0
+
+    }
+
     init {
         viewModelScope.launch {
+            // The main game loop
             while (true)
             {
-                delay(100)
-                setPixel(5,5,Color.Red)
-                delay(100)
-                setPixel(5,5,Color.Green)
+                delay(100) // tick rate
+                var veloX = cos(headAngle / 180 * PI)
+                var veloY = sin(headAngle / 180 * PI)
+                print(veloX.roundToInt().toString()+" "+veloY.roundToInt().toString())
+                headX = (headX + veloX.roundToInt()).mod(25)
+                headY = (headY + veloY.roundToInt()).mod(25)
+                setPixel(headX,headY,Color.Red)
             }
         }
     }
+}
+
+fun print(obj: String)
+{
+    Log.d("Snake Debugging",obj)
 }
 
 class MainActivity : ComponentActivity() {
@@ -75,20 +116,24 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val viewModel: GameViewModel = viewModel()
-            WearApp(
-                pixels = viewModel.pixels,
-                numSquares = viewModel.numSquares,
-                spacing = viewModel.spacing
+            WearApp (
+                viewModel = viewModel
             )
         }
     }
 }
 
 @Composable
-fun WearApp(pixels: List<Color>, numSquares: Int, spacing: Int) {
+fun WearApp(viewModel: GameViewModel) {
+    val focusRequester = remember { FocusRequester() }
     SnakeTheme {
-        Canvas(modifier = Modifier.fillMaxSize())
+        Canvas(
+            modifier = Modifier.fillMaxSize()
+        )
         {
+            val pixels = viewModel.pixels
+            val spacing = viewModel.spacing
+            val numSquares = viewModel.numSquares
             var squareSize = (size.width - ((numSquares-1)*spacing))/numSquares;
 
             for (x in 0..numSquares - 1)
@@ -105,6 +150,18 @@ fun WearApp(pixels: List<Color>, numSquares: Int, spacing: Int) {
                 }
             }
         }
+        Canvas(
+            modifier = Modifier.onRotaryScrollEvent {
+                    viewModel.onRotate(it.verticalScrollPixels)
+                    true
+                }
+                .focusRequester( focusRequester )
+                .focusable()
+        )
+        {
+
+        }
+        LaunchedEffect(Unit) { focusRequester.requestFocus() }
     }
 }
 
