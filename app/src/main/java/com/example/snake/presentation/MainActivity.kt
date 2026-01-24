@@ -80,6 +80,7 @@ class GameViewModel : ViewModel()
 
     var snakeX: Queue<Int> = LinkedList()
     var snakeY: Queue<Int> = LinkedList()
+    var inputQueue: Queue<Float> = LinkedList()
 
     var inputLock = false
     fun setPixel(x: Int, y: Int, color: Color)
@@ -104,15 +105,11 @@ class GameViewModel : ViewModel()
 
     fun onRotate(amount: Float)
     {
-        if (!inputLock) return;
-        inputLock = false
-        // Rotate
-        if (amount >= 0) headAngle += 90
-        else headAngle -= 90
-
-        // Bound correction
-        if (headAngle == -90.0) headAngle = 270.0
-        if (headAngle == 360.0) headAngle = 0.0
+        inputQueue.add(amount)
+        if (inputQueue.size > 2)
+        {
+            inputQueue.remove(inputQueue.last())
+        }
     }
 
     fun placeApple()
@@ -137,8 +134,22 @@ class GameViewModel : ViewModel()
             placeApple()
             while (true)
             {
-                inputLock = true
                 delay(200) // tick rate
+                if (inputQueue.size > 0)
+                {
+                    var amount = inputQueue.first()
+                    inputQueue.remove()
+
+                    // Rotate
+                    if (amount >= 0) headAngle += 90
+                    else headAngle -= 90
+
+                    // Bound correction
+                    if (headAngle == -90.0) headAngle = 270.0
+                    if (headAngle == 360.0) headAngle = 0.0
+
+                }
+
                 var veloX = cos(headAngle / 180 * PI)
                 var veloY = sin(headAngle / 180 * PI)
 
