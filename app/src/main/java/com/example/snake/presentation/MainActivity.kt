@@ -51,6 +51,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.LinkedList
 import java.util.Queue
+import java.util.Random
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -72,7 +73,10 @@ class GameViewModel : ViewModel()
     var headX = numSquares / 2
     var headY = numSquares / 2
     var headAngle: Double = 0.0
-    var snakeLength = 15
+    var snakeLength = 3
+
+    var appleX = 0
+    var appleY = 0
 
     var snakeX: Queue<Int> = LinkedList()
     var snakeY: Queue<Int> = LinkedList()
@@ -111,18 +115,43 @@ class GameViewModel : ViewModel()
         if (headAngle == 360.0) headAngle = 0.0
     }
 
+    fun placeApple()
+    {
+        // Initial selection
+        appleX = (0..numSquares - 1).random()
+        appleY = (0..numSquares - 1).random()
+
+        // If not valid keep trying
+        while (pixels[appleY * numSquares + appleX] == filledCol)
+        {
+            appleX = (0..numSquares - 1).random()
+            appleY = (0..numSquares - 1).random()
+        }
+
+        print("Apple pos "+appleX.toString()+" "+appleY.toString())
+    }
+
     init {
         viewModelScope.launch {
             // The main game loop
+            placeApple()
             while (true)
             {
                 inputLock = true
-                delay(100) // tick rate
+                delay(200) // tick rate
                 var veloX = cos(headAngle / 180 * PI)
                 var veloY = sin(headAngle / 180 * PI)
+
+
                 snakeX.add(headX)
                 snakeY.add(headY)
-                setPixel(headX,headY,filledCol)
+                if (headX == appleX && headY == appleY)
+                {
+                    snakeLength++
+                    placeApple()
+                }
+
+
                 if (snakeX.size > snakeLength)
                 {
                     var lastX = snakeX.first()
@@ -132,9 +161,27 @@ class GameViewModel : ViewModel()
                     snakeY.remove()
                 }
 
+                // Lose condition
+                if (pixels[headY * numSquares + headX] == filledCol)
+                {
+                    snakeLength = 3
+                    while (snakeX.size > 0)
+                    {
+                        setPixel(snakeX.first(),snakeY.first(),backgroundCol)
+                        snakeX.remove()
+                        snakeY.remove()
+                    }
+                    setPixel(appleX,appleY,backgroundCol)
+                    placeApple()
+                    headX = numSquares / 2
+                    headY = numSquares / 2
+                    continue;
+                }
+
+                setPixel(headX,headY,filledCol)
+                setPixel(appleX,appleY,Color.Red)
                 headX = (headX + veloX.roundToInt()).mod(numSquares)
                 headY = (headY + veloY.roundToInt()).mod(numSquares)
-//                updateGrid()
             }
         }
     }
