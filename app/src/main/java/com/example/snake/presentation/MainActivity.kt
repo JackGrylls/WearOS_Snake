@@ -72,6 +72,8 @@ class GameViewModel : ViewModel()
     var headX = numSquares / 2
     var headY = numSquares / 2
     var headAngle: Double = 0.0
+
+    var inputLock = false
     fun setPixel(x: Int, y: Int, color: Color)
     {
         pixels[y * numSquares + x] = color
@@ -111,6 +113,8 @@ class GameViewModel : ViewModel()
     }
     fun onRotate(amount: Float)
     {
+        if (!inputLock) return;
+        inputLock = false
         // Rotate
         if (amount >= 0) headAngle += 90
         else headAngle -= 90
@@ -118,7 +122,6 @@ class GameViewModel : ViewModel()
         // Bound correction
         if (headAngle == -90.0) headAngle = 270.0
         if (headAngle == 360.0) headAngle = 0.0
-
     }
 
     init {
@@ -126,6 +129,7 @@ class GameViewModel : ViewModel()
             // The main game loop
             while (true)
             {
+                inputLock = true
                 delay(100) // tick rate
                 var veloX = cos(headAngle / 180 * PI)
                 var veloY = sin(headAngle / 180 * PI)
