@@ -59,6 +59,13 @@ import kotlin.math.sin
 
 val backgroundCol = Color.hsv(72f,50f/100,0.5f)
 val filledCol = Color.hsv(72f,50f/100,0.1f)
+val appleCol = Color.Red
+
+class Position(x: Int, y: Int)
+{
+    var x = x
+    var y = y
+}
 class GameViewModel : ViewModel()
 {
     val numSquares = 25
@@ -78,14 +85,18 @@ class GameViewModel : ViewModel()
     var appleX = 0
     var appleY = 0
 
-    var snakeX: Queue<Int> = LinkedList()
-    var snakeY: Queue<Int> = LinkedList()
+    var snake: Queue<Position> = LinkedList()
     var inputQueue: Queue<Float> = LinkedList()
 
     var inputLock = false
     fun setPixel(x: Int, y: Int, color: Color)
     {
         pixels[y * numSquares + x] = color
+    }
+
+    fun getPixel(x: Int, y: Int): Color
+    {
+        return pixels[y * numSquares + x]
     }
 
     fun initGrid()
@@ -119,7 +130,7 @@ class GameViewModel : ViewModel()
         appleY = (0..numSquares - 1).random()
 
         // If not valid keep trying
-        while (pixels[appleY * numSquares + appleX] == filledCol)
+        while (getPixel(appleX,appleY) == filledCol)
         {
             appleX = (0..numSquares - 1).random()
             appleY = (0..numSquares - 1).random()
@@ -131,6 +142,7 @@ class GameViewModel : ViewModel()
     init {
         viewModelScope.launch {
             // The main game loop
+            initGrid()
             placeApple()
             while (true)
             {
@@ -150,37 +162,15 @@ class GameViewModel : ViewModel()
 
                 }
 
-                var veloX = cos(headAngle / 180 * PI)
-                var veloY = sin(headAngle / 180 * PI)
-
-
-                snakeX.add(headX)
-                snakeY.add(headY)
-                if (headX == appleX && headY == appleY)
-                {
-                    snakeLength++
-                    placeApple()
-                }
-
-
-                if (snakeX.size > snakeLength)
-                {
-                    var lastX = snakeX.first()
-                    var lastY = snakeY.first()
-                    setPixel(lastX,lastY,backgroundCol)
-                    snakeX.remove()
-                    snakeY.remove()
-                }
-
                 // Lose condition
-                if (pixels[headY * numSquares + headX] == filledCol)
+                if (getPixel(headX,headY) == filledCol)
                 {
                     snakeLength = 3
-                    while (snakeX.size > 0)
+                    while (snake.size > 0)
                     {
-                        setPixel(snakeX.first(),snakeY.first(),backgroundCol)
-                        snakeX.remove()
-                        snakeY.remove()
+                        var first = snake.first()
+                        setPixel(first.x,first.y,backgroundCol)
+                        snake.remove()
                     }
                     setPixel(appleX,appleY,backgroundCol)
                     placeApple()
@@ -188,6 +178,26 @@ class GameViewModel : ViewModel()
                     headY = numSquares / 2
                     continue;
                 }
+
+                var veloX = cos(headAngle / 180 * PI)
+                var veloY = sin(headAngle / 180 * PI)
+
+
+                snake.add(Position(headX,headY))
+                if (headX == appleX && headY == appleY)
+                {
+                    snakeLength++
+                    placeApple()
+                }
+
+
+                if (snake.size > snakeLength)
+                {
+                    var first = snake.first()
+                    setPixel(first.x,first.y,backgroundCol)
+                    snake.remove()
+                }
+
 
                 setPixel(headX,headY,filledCol)
                 setPixel(appleX,appleY,Color.Red)
@@ -213,7 +223,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val viewModel: GameViewModel = viewModel()
-            viewModel.initGrid()
             WearApp (
                 viewModel = viewModel
             )
