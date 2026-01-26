@@ -162,7 +162,6 @@ class GameViewModel : ViewModel()
                     placeApple()
                     headX = numSquares / 2
                     headY = numSquares / 2
-                    continue;
                 }
 
                 // draw snake
