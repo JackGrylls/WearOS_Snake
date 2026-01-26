@@ -149,8 +149,6 @@ class GameViewModel : ViewModel()
                     placeApple()
                 }
 
-                var veloX = cos(headAngle / 180 * PI)
-                var veloY = sin(headAngle / 180 * PI)
 
                 if (snake.size > snakeLength)
                 {
@@ -159,6 +157,8 @@ class GameViewModel : ViewModel()
                     snake.remove()
                 }
 
+                var veloX = cos(headAngle / 180 * PI)
+                var veloY = sin(headAngle / 180 * PI)
                 setPixel(headX,headY,filled)
                 headX = (headX + veloX.roundToInt()).mod(numSquares)
                 headY = (headY + veloY.roundToInt()).mod(numSquares)
