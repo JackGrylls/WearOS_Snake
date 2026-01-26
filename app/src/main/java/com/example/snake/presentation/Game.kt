@@ -42,7 +42,7 @@ class GameViewModel : ViewModel()
     var snake: Queue<Position> = LinkedList()
     var inputQueue: Queue<Float> = LinkedList()
     var snakeLength = 3
-    var tickDelay = 200
+    var tickDelay = 1000
 
     fun setPixel(x: Int, y: Int, value: Int)
     {
@@ -113,17 +113,42 @@ class GameViewModel : ViewModel()
     init {
         viewModelScope.launch {
             // The main game loop
-            snakeSplashInverted(model)
-            delay(2000)
+//            snakeSplashInverted(model)
+//            delay(2000)
 
             initGrid()
             placeApple()
 
             while (true)
             {
+                // apple collision check
+                if (headX == appleX && headY == appleY)
+                {
+                    snakeLength++
+                    placeApple()
+                }
+
+                // update head angle
                 processMovement(inputQueue)
 
-                // Lose condition
+                // recalculate velocity, move head
+                var veloX = cos(headAngle / 180 * PI)
+                var veloY = sin(headAngle / 180 * PI)
+                headX = (headX + veloX.roundToInt()).mod(numSquares)
+                headY = (headY + veloY.roundToInt()).mod(numSquares)
+
+                // add new head to snake
+                snake.add(Position(headX,headY))
+
+                // remove tail
+                if (snake.size > snakeLength)
+                {
+                    var first = snake.first()
+                    setPixel(first.x,first.y,background)
+                    snake.remove()
+                }
+
+                // wall collision check
                 if (logicGrid[headX][headY] == filled)
                 {
                     snakeLength = 3
@@ -140,29 +165,8 @@ class GameViewModel : ViewModel()
                     continue;
                 }
 
-
-
-                snake.add(Position(headX,headY))
-                if (headX == appleX && headY == appleY)
-                {
-                    snakeLength++
-                    placeApple()
-                }
-
-
-                if (snake.size > snakeLength)
-                {
-                    var first = snake.first()
-                    setPixel(first.x,first.y,background)
-                    snake.remove()
-                }
-
-                var veloX = cos(headAngle / 180 * PI)
-                var veloY = sin(headAngle / 180 * PI)
+                // draw snake
                 setPixel(headX,headY,filled)
-                headX = (headX + veloX.roundToInt()).mod(numSquares)
-                headY = (headY + veloY.roundToInt()).mod(numSquares)
-
                 delay(tickDelay.toLong())
             }
         }
