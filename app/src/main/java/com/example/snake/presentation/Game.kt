@@ -42,7 +42,7 @@ class GameViewModel : ViewModel()
     var snake: Queue<Position> = LinkedList()
     var inputQueue: Queue<Float> = LinkedList()
     var snakeLength = 3
-    var tickDelay = 1000
+    var tickDelay = 200
 
     fun setPixel(x: Int, y: Int, value: Int)
     {
@@ -158,10 +158,12 @@ class GameViewModel : ViewModel()
                         setPixel(first.x,first.y,background)
                         snake.remove()
                     }
+                    setPixel(headX,headY,filled)git a
                     setPixel(appleX,appleY,background)
                     placeApple()
                     headX = numSquares / 2
                     headY = numSquares / 2
+                    continue;
                 }
 
                 // draw snake
