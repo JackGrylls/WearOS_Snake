@@ -158,7 +158,7 @@ class GameViewModel : ViewModel()
                         setPixel(first.x,first.y,background)
                         snake.remove()
                     }
-                    setPixel(headX,headY,filled)git a
+                    setPixel(headX,headY,filled)
                     setPixel(appleX,appleY,background)
                     placeApple()
                     headX = numSquares / 2
