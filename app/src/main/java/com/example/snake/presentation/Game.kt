@@ -113,18 +113,29 @@ class GameViewModel : ViewModel()
     init {
         viewModelScope.launch {
             // The main game loop
-//            snakeSplashInverted(model)
-//            delay(2000)
-
+            var highScore = 0
+            try
+            {
+                highScore = FileHandling.getFileContents().split(";")[0].split(",")[1].toInt()
+            }
+            catch (e: Exception)
+            {
+                Log.d("BIG ERROR!!",FileHandling.getFileContents())
+            }
+            var currentScore = 0
+            snakeSplash(model)
+            delay(2000)
             initGrid()
             placeApple()
 
             while (true)
             {
+                delay(tickDelay.toLong())
                 // apple collision check
                 if (headX == appleX && headY == appleY)
                 {
                     snakeLength++
+                    currentScore++
                     placeApple()
                 }
 
@@ -139,6 +150,8 @@ class GameViewModel : ViewModel()
 
                 // add new head to snake
                 snake.add(Position(headX,headY))
+
+
 
                 // remove tail
                 if (snake.size > snakeLength)
@@ -159,6 +172,14 @@ class GameViewModel : ViewModel()
                         snake.remove()
                     }
 
+                    if (currentScore > highScore)
+                    {
+                        highScore = currentScore
+                        FileHandling.writeToFile("HighScore,"+highScore.toString()+";")
+                    }
+                    Log.d("High score",highScore.toString())
+                    currentScore = 0
+
                     initGrid()
                     setPixel(appleX,appleY,background)
                     placeApple()
@@ -169,7 +190,6 @@ class GameViewModel : ViewModel()
 
                 // draw snake
                 setPixel(headX,headY,filled)
-                delay(tickDelay.toLong())
             }
         }
     }

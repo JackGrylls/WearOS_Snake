@@ -1,6 +1,8 @@
 package com.example.snake.presentation
 
+import android.content.Context
 import android.os.Bundle
+import android.os.storage.StorageManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,12 +22,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.rotary.onRotaryScrollEvent
 import com.example.snake.presentation.theme.SnakeTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
+import java.util.concurrent.Executors
+
 val backgroundCol = Color.hsv(72f,50f/100,0.5f)
 val filledCol = Color.hsv(72f,50f/100,0.1f)
 val appleCol = Color.Red
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        FileHandling.InitDataStore(this)
+//        FileHandling.resetDataStore()
+//        var newHighScore = 10
+//        var fileContents = FileHandling.getFileContents().split(";")
+//        var newContents = fileContents[0] + newHighScore.toString() + "\n"  + fileContents[1]
+//        FileHandling.writeToFile(newContents)
+
+        var fileContents = FileHandling.getFileContents()
+        Log.d("MainActivity",fileContents)
+
         installSplashScreen()
 
         super.onCreate(savedInstanceState)
