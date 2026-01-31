@@ -6,6 +6,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.LinkedList
 import java.util.Queue
@@ -111,6 +114,16 @@ class GameViewModel : ViewModel()
         }
     }
 
+    fun pauseGame()
+    {
+        isPaused.value = true
+    }
+
+    fun resumeGame()
+    {
+        isPaused.value = false
+    }
+
     fun displayScore(score: Int)
     {
         val scoreString = score.toString()
@@ -123,13 +136,13 @@ class GameViewModel : ViewModel()
             x += 4
         }
     }
-
-    var model = this
+    private val isPaused = MutableStateFlow(false);
     init {
         viewModelScope.launch {
             // The main loop
             while (true)
             {
+                isPaused.filter {paused -> !paused}.first()
                 initGrid()
                 var highScore = 0
 
@@ -149,6 +162,7 @@ class GameViewModel : ViewModel()
                 var alive = true
                 while (alive)
                 {
+                    isPaused.filter {paused -> !paused}.first()
                     delay(tickDelay.toLong())
                     // apple collision check
                     if (headX == appleX && headY == appleY)

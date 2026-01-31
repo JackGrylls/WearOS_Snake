@@ -1,6 +1,7 @@
 package com.example.snake.presentation
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.os.storage.StorageManager
 import android.util.Log
@@ -33,6 +34,22 @@ val appleCol = Color.Red
 // the "main" class which runs when the app starts
 // Very simply, this handles I/O
 class MainActivity : ComponentActivity() {
+    lateinit var viewModel: GameViewModel
+
+    override fun onPause()
+    {
+        super.onPause()
+        Log.d("MainActivity","Game paused!")
+        viewModel.pauseGame()
+    }
+
+    override fun onResume()
+    {
+        super.onResume()
+        Log.d("MainActivity","Game resumed!")
+        if (this::viewModel.isInitialized) viewModel.resumeGame()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -47,7 +64,7 @@ class MainActivity : ComponentActivity() {
         // viewModel is the actual game logic (Game.kt)
         setTheme(android.R.style.Theme_DeviceDefault)
         setContent {
-            val viewModel: GameViewModel = viewModel()
+            viewModel = viewModel()
             WearApp (
                 viewModel = viewModel
             )
