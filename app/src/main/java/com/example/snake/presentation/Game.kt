@@ -80,6 +80,22 @@ class GameViewModel : ViewModel()
         }
     }
 
+    fun onTap(x: Float, y: Float, width: Int, height: Int)
+    {
+        Log.d("TAP INPUT","$x $y")
+
+        when (headAngle) {
+            0.0 -> if (y > height / 2) inputQueue.add(1f) else inputQueue.add(-1f)
+            90.0 -> if (x > width / 2) inputQueue.add(-1f) else inputQueue.add(1f)
+            180.0 -> if (y > height / 2) inputQueue.add(-1f) else inputQueue.add(1f)
+            270.0 -> if (x > width / 2) inputQueue.add(1f) else inputQueue.add(-1f)
+        }
+        if (inputQueue.size > 2)
+        {
+            inputQueue.remove(inputQueue.last())
+        }
+    }
+
     fun placeApple()
     {
         // Initial selection
@@ -138,7 +154,6 @@ class GameViewModel : ViewModel()
     }
     private val isPaused = MutableStateFlow(false);
     init {
-        FileHandling.resetDataStore()
         viewModelScope.launch {
             // The main loop
             while (true)

@@ -99,9 +99,9 @@ class FileHandling {
                     context.openFileOutput(filename, Context.MODE_PRIVATE).use {
                         it.write(data.toByteArray())
                     }
+                    busyFlag = false
                 }
             }
-            busyFlag = false
             return true
         }
 
