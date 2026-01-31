@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -25,26 +26,25 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import java.util.concurrent.Executors
 
 val backgroundCol = Color.hsv(72f,50f/100,0.5f)
-val filledCol = Color.hsv(72f,50f/100,0.1f)
+val wallCol = Color.hsv(72f,50f/100,0.1f)
+val snakeCol = Color.hsv(72f,50f/100,0.1f)
 val appleCol = Color.Red
 
+// the "main" class which runs when the app starts
+// Very simply, this handles I/O
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-
-        FileHandling.InitDataStore(this)
-//        FileHandling.resetDataStore()
-//        var newHighScore = 10
-//        var fileContents = FileHandling.getFileContents().split(";")
-//        var newContents = fileContents[0] + newHighScore.toString() + "\n"  + fileContents[1]
-//        FileHandling.writeToFile(newContents)
-
-        var fileContents = FileHandling.getFileContents()
-        Log.d("MainActivity",fileContents)
+        super.onCreate(savedInstanceState)
 
         installSplashScreen()
 
-        super.onCreate(savedInstanceState)
+        // We initialise the data store for high scores and settings
+        Log.d("MainActivity","H")
+        FileHandling.InitDataStore(this)
+        Log.d("MainActivity","HH")
+        var fileContents = FileHandling.getFileContents()
 
+        // viewModel is the actual game logic (Game.kt)
         setTheme(android.R.style.Theme_DeviceDefault)
         setContent {
             val viewModel: GameViewModel = viewModel()
@@ -54,6 +54,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+// Handles drawing to the screen and input events
 @Composable
 fun WearApp(viewModel: GameViewModel) {
     val focusRequester = remember { FocusRequester() }
@@ -73,14 +75,19 @@ fun WearApp(viewModel: GameViewModel) {
                 for (y in 0..numSquares - 1)
                 {
                     val col = pixels[y*numSquares + x]
-                    if (col == backgroundCol) continue; // skip rendering background pixels
+//                    if (col == backgroundCol) continue; // skip rendering background pixels
 
                     val xCor : Float = size.width / (numSquares) * x + 1
                     val yCor : Float = size.height / (numSquares) * y + 1
-                    drawRect (
+
+                    var cornerRadius = 2f
+                    if (viewModel.logicGrid[x][y] == snake) cornerRadius = 5f
+
+                    drawRoundRect(
                         color = col,
                         size = Size(squareSize,squareSize),
-                        topLeft = Offset(xCor,yCor)
+                        topLeft = Offset(xCor,yCor),
+                        cornerRadius = CornerRadius(cornerRadius,cornerRadius)
                     )
                 }
             }

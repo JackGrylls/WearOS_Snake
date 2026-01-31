@@ -14,8 +14,9 @@ import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 const val background = 0
-const val filled = 1
-const val apple = 2
+const val wall = 1
+const val snake = 2
+const val apple = 3
 fun print(obj: String)
 {
     Log.d("Snake Debugging",obj)
@@ -32,14 +33,15 @@ class GameViewModel : ViewModel()
     }
     var colors = listOf(
         backgroundCol,
-        filledCol,
+        wallCol,
+        snakeCol,
         appleCol
     )
 
     var logicGrid = Array(numSquares) {Array<Int>(numSquares) { 0 } }
     var headAngle: Double = 0.0; var headX = numSquares / 2; var headY = numSquares / 2;
     var appleX = 0; var appleY = 0
-    var snake: Queue<Position> = LinkedList()
+    var snakeQueue: Queue<Position> = LinkedList()
     var inputQueue: Queue<Float> = LinkedList()
     var snakeLength = 3
     var tickDelay = 200
@@ -60,7 +62,7 @@ class GameViewModel : ViewModel()
             {
                 val xCor = x - centre
                 val yCor = y - centre
-                if ((xCor*xCor) + (yCor*yCor) > radius * radius) setPixel(x,y,filled)
+                if ((xCor*xCor) + (yCor*yCor) > radius * radius) setPixel(x,y,wall)
                 else setPixel(x,y,background)
             }
         }
@@ -82,7 +84,7 @@ class GameViewModel : ViewModel()
         appleY = (0..numSquares - 1).random()
 
         // If not valid keep trying
-        while (logicGrid[appleX][appleY] == filled)
+        while (logicGrid[appleX][appleY] == wall || logicGrid[appleX][appleY] == snake)
         {
             appleX = (0..numSquares - 1).random()
             appleY = (0..numSquares - 1).random()
@@ -109,87 +111,106 @@ class GameViewModel : ViewModel()
         }
     }
 
+    fun displayScore(score: Int)
+    {
+        val scoreString = score.toString()
+        var x = 21/2 - 1
+        var y = 21/2 - 2
+
+        for (char in scoreString)
+        {
+            drawSplash(this,char.toString(),x,y)
+            x += 4
+        }
+    }
+
     var model = this
     init {
         viewModelScope.launch {
-            // The main game loop
-            var highScore = 0
-            try
-            {
-                highScore = FileHandling.getFileContents().split(";")[0].split(",")[1].toInt()
-            }
-            catch (e: Exception)
-            {
-                Log.d("BIG ERROR!!",FileHandling.getFileContents())
-            }
-            var currentScore = 0
-            snakeSplash(model)
-            delay(2000)
-            initGrid()
-            placeApple()
-
+            // The main loop
             while (true)
             {
-                delay(tickDelay.toLong())
-                // apple collision check
-                if (headX == appleX && headY == appleY)
-                {
-                    snakeLength++
-                    currentScore++
-                    placeApple()
+                initGrid()
+                var highScore = 0
+
+                try {
+                    highScore = FileHandling.getFileContents().split(";")[0].split(",")[1].toInt()
                 }
+                catch (e: Exception) { Log.d("File handling error: ",FileHandling.getFileContents()) }
 
-                // update head angle
-                processMovement(inputQueue)
+                var currentScore = 0
 
-                // recalculate velocity, move head
-                var veloX = cos(headAngle / 180 * PI)
-                var veloY = sin(headAngle / 180 * PI)
-                headX = (headX + veloX.roundToInt()).mod(numSquares)
-                headY = (headY + veloY.roundToInt()).mod(numSquares)
+                displayScore(highScore)
+                delay(1000)
 
-                // add new head to snake
-                snake.add(Position(headX,headY))
+                initGrid()
+                placeApple()
 
-
-
-                // remove tail
-                if (snake.size > snakeLength)
+                var alive = true
+                while (alive)
                 {
-                    var first = snake.first()
-                    setPixel(first.x,first.y,background)
-                    snake.remove()
-                }
-
-                // wall collision check
-                if (logicGrid[headX][headY] == filled)
-                {
-                    snakeLength = 3
-                    while (snake.isNotEmpty())
+                    delay(tickDelay.toLong())
+                    // apple collision check
+                    if (headX == appleX && headY == appleY)
                     {
-                        var first = snake.first()
+                        snakeLength++
+                        currentScore++
+                        placeApple()
+                    }
+
+                    // update head angle
+                    processMovement(inputQueue)
+
+                    // recalculate velocity, move head
+                    var veloX = cos(headAngle / 180 * PI)
+                    var veloY = sin(headAngle / 180 * PI)
+                    headX = (headX + veloX.roundToInt()).mod(numSquares)
+                    headY = (headY + veloY.roundToInt()).mod(numSquares)
+
+                    // add new head to snake
+                    snakeQueue.add(Position(headX,headY))
+
+
+
+                    // remove tail
+                    if (snakeQueue.size > snakeLength)
+                    {
+                        var first = snakeQueue.first()
                         setPixel(first.x,first.y,background)
-                        snake.remove()
+                        snakeQueue.remove()
                     }
 
-                    if (currentScore > highScore)
+                    // wall collision check
+                    if (logicGrid[headX][headY] == wall || logicGrid[headX][headY] == snake)
                     {
-                        highScore = currentScore
-                        FileHandling.writeToFile("HighScore,"+highScore.toString()+";")
+                        snakeLength = 3
+                        while (snakeQueue.isNotEmpty())
+                        {
+                            var first = snakeQueue.first()
+                            setPixel(first.x,first.y,background)
+                            snakeQueue.remove()
+                        }
+
+                        if (currentScore > highScore)
+                        {
+                            highScore = currentScore
+                            FileHandling.writeToFile("HighScore,"+highScore.toString()+";")
+                        }
+                        Log.d("High score",highScore.toString())
+                        currentScore = 0
+
+                        initGrid()
+                        setPixel(appleX,appleY,background)
+                        placeApple()
+                        headX = numSquares / 2
+                        headY = numSquares / 2
+                        alive = false
+                        continue;
                     }
-                    Log.d("High score",highScore.toString())
-                    currentScore = 0
 
-                    initGrid()
-                    setPixel(appleX,appleY,background)
-                    placeApple()
-                    headX = numSquares / 2
-                    headY = numSquares / 2
-                    continue;
-                }
-
-                // draw snake
-                setPixel(headX,headY,filled)
+                    // draw snake
+                    setPixel(headX,headY,snake)
+            }
             }
         }
     }
