@@ -57,6 +57,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d("SNAKE","SIgma")
         super.onCreate(savedInstanceState)
 
         installSplashScreen()
@@ -100,8 +101,8 @@ fun WearApp(viewModel: GameViewModel) {
                     val xCor : Float = size.width / (numSquares) * x + 1
                     val yCor : Float = size.height / (numSquares) * y + 1
 
-                    var cornerRadius = 2f
-                    if (viewModel.logicGrid[x][y] == snake) cornerRadius = 5f
+                    var cornerRadius = 3f
+                    if (viewModel.logicGrid[x][y] == snake) cornerRadius = 7f
 
                     drawRoundRect(
                         color = col,

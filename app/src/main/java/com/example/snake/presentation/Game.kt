@@ -16,6 +16,8 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.text.iterator
+
 const val background = 0
 const val wall = 1
 const val snake = 2
@@ -82,8 +84,6 @@ class GameViewModel : ViewModel()
 
     fun onTap(x: Float, y: Float, width: Int, height: Int)
     {
-        Log.d("TAP INPUT","$x $y")
-
         when (headAngle) {
             0.0 -> if (y > height / 2) inputQueue.add(1f) else inputQueue.add(-1f)
             90.0 -> if (x > width / 2) inputQueue.add(-1f) else inputQueue.add(1f)
@@ -140,10 +140,43 @@ class GameViewModel : ViewModel()
         isPaused.value = false
     }
 
+    fun displayHighScores(scoreIndex: Int)
+    {
+        var scores = FileHandling.getHighScores()
+        val scoreString = scores[scoreIndex-1]
+
+        var x = 21/2 - 9 / 2 // half of display size minus size of hash and number
+        var y = 21/2 - 6
+        drawSplash(this,"hash",x,y)
+        x += 6
+        drawSplash(this,scoreIndex.toString(),x,y)
+        for (i in 21/2-5..21/2+5)
+        {
+            setPixel(i,21/2,wall)
+        }
+
+
+        // Decides where to start drawing text from based on digit length
+        // (So the numbers can be centred)
+        val textWidth = 4 * scores[scoreIndex-1].length - 1
+        x = 21/2 - textWidth / 2
+        y = 21/2 + 2
+
+        for (char in scoreString)
+        {
+            drawSplash(this,char.toString(),x,y)
+            x += 4
+        }
+    }
+
     fun displayScore(score: String)
     {
         val scoreString = score
-        var x = 21/2 - 1
+
+        // Decides where to start drawing text from based on digit length
+        // (So the numbers can be centred)
+        val textWidth = 4 * score.length - 1
+        var x = 21/2 - textWidth / 2
         var y = 21/2 - 2
 
         for (char in scoreString)
@@ -164,9 +197,12 @@ class GameViewModel : ViewModel()
                 var currentScore = 0
                 var highScore = FileHandling.getHighScores()[0]
 
-                Log.d("HIGH SCORE",highScore)
-                displayScore(highScore)
-                delay(1000)
+                for (i in 1..3)
+                {
+                    displayHighScores(i)
+                    delay(1500)
+                    initGrid()
+                }
 
                 initGrid()
                 placeApple()
@@ -218,20 +254,21 @@ class GameViewModel : ViewModel()
                         }
 
                         FileHandling.setHighScore(currentScore)
-                        currentScore = 0
 
                         initGrid()
                         setPixel(appleX,appleY,background)
-                        placeApple()
                         headX = numSquares / 2
                         headY = numSquares / 2
                         alive = false
+                        displayScore(currentScore.toString())
+                        delay(1500)
+                        currentScore = 0
                         continue;
                     }
 
                     // draw snake
                     setPixel(headX,headY,snake)
-            }
+                }
             }
         }
     }
