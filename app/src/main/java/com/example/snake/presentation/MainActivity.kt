@@ -56,10 +56,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
 
         // We initialise the data store for high scores and settings
-        Log.d("MainActivity","H")
         FileHandling.InitDataStore(this)
-        Log.d("MainActivity","HH")
-        var fileContents = FileHandling.getFileContents()
 
         // viewModel is the actual game logic (Game.kt)
         setTheme(android.R.style.Theme_DeviceDefault)

@@ -93,7 +93,7 @@ class GameViewModel : ViewModel()
             appleY = (0..numSquares - 1).random()
         }
         setPixel(appleX,appleY,apple)
-        print("Apple pos " + appleX.toString() + " " + appleY.toString())
+        print("Apple pos $appleX $appleY")
     }
 
     fun processMovement(inputQueue: Queue<Float>)
@@ -124,9 +124,9 @@ class GameViewModel : ViewModel()
         isPaused.value = false
     }
 
-    fun displayScore(score: Int)
+    fun displayScore(score: String)
     {
-        val scoreString = score.toString()
+        val scoreString = score
         var x = 21/2 - 1
         var y = 21/2 - 2
 
@@ -138,21 +138,18 @@ class GameViewModel : ViewModel()
     }
     private val isPaused = MutableStateFlow(false);
     init {
+        FileHandling.resetDataStore()
         viewModelScope.launch {
             // The main loop
             while (true)
             {
                 isPaused.filter {paused -> !paused}.first()
                 initGrid()
-                var highScore = 0
-
-                try {
-                    highScore = FileHandling.getFileContents().split(";")[0].split(",")[1].toInt()
-                }
-                catch (e: Exception) { Log.d("File handling error: ",FileHandling.getFileContents()) }
 
                 var currentScore = 0
+                var highScore = FileHandling.getHighScores()[0]
 
+                Log.d("HIGH SCORE",highScore)
                 displayScore(highScore)
                 delay(1000)
 
@@ -205,12 +202,7 @@ class GameViewModel : ViewModel()
                             snakeQueue.remove()
                         }
 
-                        if (currentScore > highScore)
-                        {
-                            highScore = currentScore
-                            FileHandling.writeToFile("HighScore,"+highScore.toString()+";")
-                        }
-                        Log.d("High score",highScore.toString())
+                        FileHandling.setHighScore(currentScore)
                         currentScore = 0
 
                         initGrid()
