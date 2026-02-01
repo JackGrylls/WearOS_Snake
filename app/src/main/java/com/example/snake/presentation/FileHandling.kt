@@ -29,6 +29,7 @@ class FileHandling {
             var newScore = newScore
             val scores = getHighScores()
             var newStr = "HighScore,"
+
             for (scoreStr in scores)
             {
                 Log.d(logger,"$scoreStr $newScore")
@@ -36,7 +37,7 @@ class FileHandling {
                 if (newScore > score)
                 {
                     newStr += "$newScore,"
-                    newScore = 0 // Set to 0 so that the following entries are not set
+                    newScore = score // Set to 0 so that the following entries are not set
                 }
                 else newStr += "$score,"
             }

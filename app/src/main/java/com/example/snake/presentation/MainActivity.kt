@@ -101,8 +101,8 @@ fun WearApp(viewModel: GameViewModel) {
                     val xCor : Float = size.width / (numSquares) * x + 1
                     val yCor : Float = size.height / (numSquares) * y + 1
 
-                    var cornerRadius = 3f
-                    if (viewModel.logicGrid[x][y] == snake) cornerRadius = 7f
+                    var cornerRadius = 7f
+                    if (viewModel.logicGrid[x][y] == wall) cornerRadius = 3f
 
                     drawRoundRect(
                         color = col,

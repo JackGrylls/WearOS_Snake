@@ -188,6 +188,7 @@ class GameViewModel : ViewModel()
     private val isPaused = MutableStateFlow(false);
     init {
         viewModelScope.launch {
+            FileHandling.resetDataStore()
             // The main loop
             while (true)
             {

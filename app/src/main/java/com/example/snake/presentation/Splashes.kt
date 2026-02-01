@@ -16,7 +16,6 @@ val splashes = arrayOf(
     "9;3,5;000100101000000",
     "hash;5,5;1010010001001001000100101",
     "hyphen;3,5;110111101111011"
-
 )
 
 fun drawSplash(context: GameViewModel, name: String, x: Int, y: Int)
