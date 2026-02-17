@@ -25,7 +25,7 @@ const val apple = 3
 const val logger = "SNAKE GAME LOOP"
 class Position(var x: Int, var y: Int) {}
 
-class Input(var bezelDelta: Float, var tapX: Float, var tapY: Float)
+class Input(var bezelDelta: Float, var tapX: Float, var tapY: Float, var width: Int, var height: Int)
 class GameViewModel : ViewModel()
 {
     val numSquares = 21; val spacing = 2
@@ -46,7 +46,7 @@ class GameViewModel : ViewModel()
     var headAngle: Double = 0.0; var headX = numSquares / 2; var headY = numSquares / 2;
     var appleX = 0; var appleY = 0
     var snakeQueue: Queue<Position> = LinkedList()
-    var inputQueue: Queue<Float> = LinkedList()
+    var inputQueue: Queue<Input> = LinkedList()
     var snakeLength = 3
     var tickDelay = 200
 
@@ -75,7 +75,8 @@ class GameViewModel : ViewModel()
     fun onRotate(amount: Float)
     {
         Log.d(logger,"ROTATE EVENT")
-        inputQueue.add(amount)
+        var input: Input = Input(amount,0f,0f,0,0)
+        inputQueue.add(input)
         if (inputQueue.size > 2)
         {
             inputQueue.remove(inputQueue.last())
@@ -85,12 +86,8 @@ class GameViewModel : ViewModel()
     fun onTap(x: Float, y: Float, width: Int, height: Int)
     {
         Log.d(logger,"TAP EVENT")
-        when (headAngle) {
-            0.0 -> if (y > height / 2) inputQueue.add(1f) else inputQueue.add(-1f)
-            90.0 -> if (x > width / 2) inputQueue.add(-1f) else inputQueue.add(1f)
-            180.0 -> if (y > height / 2) inputQueue.add(-1f) else inputQueue.add(1f)
-            270.0 -> if (x > width / 2) inputQueue.add(1f) else inputQueue.add(-1f)
-        }
+        var input: Input = Input(0f,x,y, width, height)
+        inputQueue.add(input)
         if (inputQueue.size > 2)
         {
             inputQueue.remove(inputQueue.last())
@@ -113,17 +110,37 @@ class GameViewModel : ViewModel()
         Log.d(logger,"Apples pos $appleX $appleY")
     }
 
-    fun processMovement(inputQueue: Queue<Float>)
+    fun processMovement(inputQueue: Queue<Input>)
     {
         if (inputQueue.isNotEmpty())
         {
             Log.d(logger,"PROCESSING INPUT")
-            val amount = inputQueue.first()
+            val input = inputQueue.first()
             inputQueue.remove()
 
-            // Rotate
-            if (amount >= 0) headAngle += 90
-            else headAngle -= 90
+            // Bezel input
+            if (input.bezelDelta != 0f)
+            {
+                // Rotate
+                if (input.bezelDelta >= 0) headAngle += 90
+                else headAngle -= 90
+            }
+            // Touch input
+            else
+            {
+                val x = input.tapX;
+                val y = input.tapY;
+
+                val width = input.width;
+                val height = input.height;
+
+                when (headAngle) {
+                    0.0 -> if (y > height / 2) headAngle += 90 else headAngle -= 90
+                    90.0 -> if (x > width / 2) headAngle -= 90 else headAngle += 90
+                    180.0 -> if (y > height / 2) headAngle -= 90 else headAngle += 90
+                    270.0 -> if (x > width / 2) headAngle += 90 else headAngle -= 90
+                }
+            }
 
             // Bound correction
             if (headAngle == -90.0) headAngle = 270.0
