@@ -4,16 +4,16 @@ plugins {
 }
 
 android {
-    namespace = "com.example.snake"
+    namespace = "jackgrylls.game.snake"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.example.snake"
+        applicationId = "jackgrylls.game.snake"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
+        versionCode = 3
         versionName = "1.0"
 
     }
@@ -25,6 +25,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
